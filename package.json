@@ -23,7 +23,7 @@
 		"@elysiajs/cors": "^1.4.0",
 		"axios": "^1.7.2",
 		"discord.js": "^14.15.3",
-		"dotenv": "^16.4.5",
+		"dotenv": "^17.4.2",
 		"elysia": "^1.4.0",
 		"zod": "^4.4.3"
 	},
