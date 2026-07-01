@@ -1,5 +1,3 @@
-// utils/colors.ts
-
 export default {
 	reset: "\x1b[0m",
 	bright: "\x1b[1m",

@@ -1,21 +1,12 @@
-import { Client, CommandInteraction, SlashCommandBuilder, PermissionFlagsBits } from "discord.js";
-import { Command, CommandOptions } from "engine";
+import { SlashCommandBuilder } from "discord.js";
+import { Command, BaseCommand, CommandContext } from "engine";
 
-export const globals = {
-	some_variable: "test"
-}
+@Command({ cooldown: 5, guilds: ["*"] })
+export default class Ping extends BaseCommand {
+	data = new SlashCommandBuilder().setName("ping").setDescription("Replies with Pong!");
+	globals = { some_variable: "test" };
 
-@Command(5, ["*"], new SlashCommandBuilder().setName("ping").setDescription("Replies with Pong!"))
-export default class PingCommand {
-	public static async callback(client: Client, interaction: CommandInteraction, options: CommandOptions) {
-		// get options
-		const cooldown = options.cooldown; // is: 3
-		const command_name = options.data.name; // is: ping
-
-		// get current global variables
-		const globals = client.globals.get(command_name);
-		console.log(globals.some_variable); // is: test
-
-		await interaction.reply("Pong!");
+	async execute(context: CommandContext) {
+		await context.interaction.reply(`Pong! (${context.globals.some_variable})`);
 	}
 }

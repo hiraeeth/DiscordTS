@@ -1,10 +1,10 @@
-import { Client } from "discord.js";
-import { Component, Automatic } from "engine";
+import type { AnySelectMenuInteraction } from "discord.js";
+import { Register, SelectComponent } from "engine";
 
-@Component("my_select_menu", "select")
-export default class MySelectMenuComponent {
-	public static async callback(client: Client, interaction: Automatic<"select">) {
-		const selectedValue = interaction.values[0];
-		await interaction.reply(`You selected ${selectedValue}!`);
+@Register("my_select_menu")
+export default class MySelectMenu extends SelectComponent {
+	async execute(interaction: AnySelectMenuInteraction) {
+		const selected = interaction.isStringSelectMenu() ? interaction.values[0] : "unknown";
+		await interaction.reply(`You selected ${selected}!`);
 	}
 }

@@ -1,34 +1,52 @@
-import { ButtonInteraction, StringSelectMenuInteraction, ModalSubmitInteraction } from "discord.js";
-export const storage: { [key: string]: any } = {};
+export { boot } from "./boot";
+export { deploy_commands } from "./deploy";
+export { load_env } from "./env";
+export type { Env } from "./env";
+export { client } from "./client";
+export type { RegisteredCommand } from "./client";
 
-export function Command(cooldown: number, guilds: string[], builder: any) {
-	return function (target: any) {
-		storage[`command_${target.name}`] = { cooldown, guilds, builder };
-	};
-}
+export { Command, Event, Register, Route } from "./decorators";
 
-export function Event(name: string, once: boolean = false) {
-	return function (target: any) {
-		storage[`event_${target.name}`] = { name, once };
-	};
-}
+export { BaseCommand } from "./base/command";
+export { BaseEvent } from "./base/event";
+export { BaseRoute } from "./base/route";
+export type { RouteContext, RouteSchema, RouteSchemas } from "./base/route";
+export { z } from "zod";
+export {
+	Component,
+	ButtonComponent,
+	ModalComponent,
+	SelectComponent,
+	StringSelectComponent,
+	UserSelectComponent,
+	RoleSelectComponent,
+	ChannelSelectComponent,
+	MentionableSelectComponent,
+} from "./base/component";
 
-type componentTypes = "modal" | "button" | "select" | "text-input";
-export type Automatic<T extends componentTypes> = T extends "select"
-	? StringSelectMenuInteraction
-	: T extends "button"
-	? ButtonInteraction
-	: T extends "modal"
-	? ModalSubmitInteraction
-	: T extends "text-input"
-	? ModalSubmitInteraction
-	: never;
+export {
+	container,
+	section,
+	text,
+	separator,
+	thumbnail,
+	gallery,
+	file,
+	view,
+	ActionRowBuilder,
+	ButtonBuilder,
+	ContainerBuilder,
+	FileBuilder,
+	MediaGalleryBuilder,
+	MediaGalleryItemBuilder,
+	SectionBuilder,
+	SeparatorBuilder,
+	TextDisplayBuilder,
+	ThumbnailBuilder,
+} from "./ui";
+export type { ContainerChild, TopLevelComponent, ActionRow } from "./ui";
 
-export function Component(id: string, type: componentTypes) {
-	return function (target: any) {
-		storage[`component_${target.name}`] = { id, type, target };
-	};
-}
+export { Permissions } from "./permissions";
+export type { Permission, PermissionHolder } from "./permissions";
 
-import { CallbackOptions } from "index";
-export type CommandOptions = CallbackOptions;
+export type { CommandContext, CommandData, ComponentKind, CommandOptions, EventOptions } from "./types";

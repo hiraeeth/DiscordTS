@@ -1,11 +1,10 @@
-import { Client, Events } from "discord.js";
-import { Event } from "engine";
+import { Events, Client } from "discord.js";
+import { Event, BaseEvent } from "engine";
+import color from "@/lib/colors";
 
-import color from "@utils/colors";
-
-@Event(Events.ClientReady, true)
-export default class ReadyEvent {
-	public static async callback(client: Client, event: any) {
-		console.log(`${color.fg.cyan}App ${color.reset}‣ ${color.fg.cyan}${event.user.username}${color.reset} is online.`);
+@Event(Events.ClientReady, { once: true })
+export default class Ready extends BaseEvent {
+	async execute(client: Client) {
+		console.log(`${color.fg.cyan}App ${color.reset}‣ ${color.fg.cyan}${client.user?.username}${color.reset} is online.`);
 	}
 }

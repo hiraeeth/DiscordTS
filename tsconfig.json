@@ -1,22 +1,30 @@
 {
 	"compilerOptions": {
 		"target": "ES2022",
-		"module": "ES2022",
-		"moduleResolution": "Node",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"moduleDetection": "force",
+		"types": ["bun-types"],
+		"allowImportingTsExtensions": true,
+		"noEmit": true,
 		"strict": true,
 		"noImplicitAny": false,
-		"declaration": false,
+		"skipLibCheck": true,
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true,
-		"skipLibCheck": true,
-		"strictNullChecks": true,
 		"resolveJsonModule": true,
 		"esModuleInterop": true,
-		"outDir": "build",
+		"allowSyntheticDefaultImports": true,
+		"forceConsistentCasingInFileNames": true,
 		"baseUrl": "./",
 		"paths": {
-			"@/*": ["/*"],
-			"@utils/*": ["utils/*"]
+			"@/*": ["./*"],
+			"@/lib/*": ["./lib/*"],
+			"engine": ["./engine/index.ts"],
+			"config": ["./config.ts"],
+			"index": ["./index.ts"]
 		}
-	}
+	},
+	"include": ["**/*.ts"],
+	"exclude": ["node_modules", "dist", "lib/generated"]
 }

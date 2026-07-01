@@ -1,10 +1,10 @@
 import "dotenv/config";
 import { install_console } from "@/lib/logger";
-import { boot } from "engine";
+import { deploy_commands } from "engine";
 
 install_console();
 
-boot().catch((error) => {
+deploy_commands().catch((error) => {
 	console.error(error);
 	process.exit(1);
 });

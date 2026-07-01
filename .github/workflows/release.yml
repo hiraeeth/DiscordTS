@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: "Release channel"
+        type: choice
+        options:
+          - release
+          - canary
+        default: release
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Type-check and build
+        run: bun run build
+
+      - name: Run tests
+        run: bun test
+
+      - name: Resolve release metadata
+        id: meta
+        run: |
+          set -euo pipefail
+          version=$(jq -r .version package.json)
+          channel="${{ github.event.inputs.channel || 'release' }}"
+
+          if [ "$channel" = "canary" ]; then
+            tag="v${version}-canary.${{ github.run_number }}"
+            prerelease=true
+            exists=false
+          else
+            tag="v${version}"
+            prerelease=false
+            if git rev-parse "$tag" >/dev/null 2>&1; then
+              exists=true
+            else
+              exists=false
+            fi
+          fi
+
+          echo "channel=$channel" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
+          echo "exists=$exists" >> "$GITHUB_OUTPUT"
+
+      - name: Build changelog
+        if: steps.meta.outputs.exists == 'false'
+        run: |
+          set -euo pipefail
+          previous=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          {
+            echo "## ${{ steps.meta.outputs.channel }} ${{ steps.meta.outputs.tag }}"
+            echo ""
+            echo "### Changes"
+            if [ -z "$previous" ]; then
+              git log --pretty=format:"- %s (%h)"
+            else
+              git log "${previous}..HEAD" --pretty=format:"- %s (%h)"
+            fi
+            echo ""
+          } > RELEASE_BODY.md
+
+      - name: Publish release
+        if: steps.meta.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: ${{ steps.meta.outputs.tag }}
+          body_path: RELEASE_BODY.md
+          prerelease: ${{ steps.meta.outputs.prerelease }}
