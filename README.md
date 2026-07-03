@@ -164,10 +164,10 @@ Text commands (`.ping`) driven off `MessageCreate` - an alternative to slash com
 @Prefix({ cooldown: 3, guilds: ["*"] })
 export default class Avatar extends BasePrefixCommand {
 	data = new PrefixCommandBuilder()
-		.set_name("avatar")
-		.set_description("Show a user's avatar.")
-		.add_alias("av")
-		.add_user("target", "Whose avatar to show");
+		.setName("avatar")
+		.setDescription("Show a user's avatar.")
+		.addAlias("av")
+		.addUser("target", "Whose avatar to show");
 
 	async execute(context: PrefixContext) {
 		const user = (context.args.target as User) ?? context.message.author;
@@ -176,7 +176,7 @@ export default class Avatar extends BasePrefixCommand {
 }
 ```
 
-The prefix is per-guild: it defaults to `config.prefix.default`, can be changed at runtime (persisted to storage), and - when `config.prefix.allow_mention` is on - `@bot` also works as a prefix. The whole subsystem is gated by `config.prefix.enabled`. Builder methods: `set_name`, `set_description`, `add_alias`, and typed `add_string` / `add_integer` / `add_number` / `add_boolean` / `add_user` / `add_member` / `add_channel` / `add_role` / `add_rest`.
+The prefix is per-guild: it defaults to `config.prefix.default`, can be changed at runtime (persisted to storage), and - when `config.prefix.allow_mention` is on - `@bot` also works as a prefix. The whole subsystem is gated by `config.prefix.enabled`. The builder mirrors discord.js's `SlashCommandBuilder` naming: `setName`, `setDescription`, `addAlias`, and typed `addString` / `addInteger` / `addNumber` / `addBoolean` / `addUser` / `addMember` / `addChannel` / `addRole` / `addRest`.
 
 ### Events
 

@@ -84,14 +84,14 @@ describe("resolve_arguments", () => {
 
 describe("PrefixCommandBuilder", () => {
 	test("lowercases the name and renders usage", () => {
-		const builder = new PrefixCommandBuilder().set_name("Config").add_string("key", "", true).add_string("value", "");
+		const builder = new PrefixCommandBuilder().setName("Config").addString("key", "", true).addString("value", "");
 		expect(builder.name).toBe("config");
 		expect(builder.usage(".")).toBe(".config <key> [value]");
 	});
 });
 
 describe("lookup", () => {
-	const command = { data: new PrefixCommandBuilder().set_name("ping").add_alias("p", "pong") } as RegisteredPrefix;
+	const command = { data: new PrefixCommandBuilder().setName("ping").addAlias("p", "pong") } as RegisteredPrefix;
 	const prefixes = new Collection<string, RegisteredPrefix>([[command.data.name, command]]);
 
 	test("resolves a command by its canonical name and by every alias to the same entry", () => {

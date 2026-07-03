@@ -4,7 +4,7 @@ import { Prefix, BasePrefixCommand, PrefixCommandBuilder, PrefixContext } from "
 
 @Prefix({ guilds: ["*"] })
 export default class Config extends BasePrefixCommand {
-	data = new PrefixCommandBuilder().set_name("config").set_description("Inspect and change the server prefix.").add_alias("cfg");
+	data = new PrefixCommandBuilder().setName("config").setDescription("Inspect and change the server prefix.").addAlias("cfg");
 
 	async execute(context: PrefixContext) {
 		const guild_id = context.message.guildId;
