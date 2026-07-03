@@ -1,4 +1,4 @@
-# DiscordTS Base
+# Discord Bot Template (TypeScript)
 
 A decorator-driven Discord bot template built with **TypeScript**, **discord.js v14**, and **Bun**. You write small feature classes, drop them in a folder, and the engine discovers, instantiates, injects the client, and wires them at startup. No manual registration, no database, no boilerplate to maintain.
 
@@ -20,13 +20,13 @@ That is a complete, working command. Save it under `app/commands/` and it is liv
 
 ## Highlights
 
-- **Decorator-driven.** `@Command`, `@ContextMenu`, `@Prefix`, `@Event`, `@Cron`, `@Interval`, `@Register`, `@Route` — declare a class, drop the file, done.
+- **Decorator-driven.** `@Command`, `@ContextMenu`, `@Prefix`, `@Event`, `@Cron`, `@Interval`, `@Register`, `@Route` - declare a class, drop the file, done.
 - **Slash + text + context-menu commands**, subcommand routing, and autocomplete.
 - **Guards and scoped cooldowns** run before every handler (`owner_only`, `has_perms(...)`, custom functions; per user/guild/channel/global).
 - **Typed permissions**, channel-aware, with autocompleting permission names.
 - **Batteries-included UI**: Components V2 helpers, embeds, pagination, interactive settings panels, confirm/alert dialogs, and modal forms.
 - **Pluggable storage** (JSON / memory / your own adapter), per-guild prefixes, i18n, duration parsing, and a scoped cooldown manager.
-- **Optional HTTP API** on Elysia with a Next.js-style router — **secure by default**: token auth, rate limiting, CORS, and a declarative rule engine.
+- **Optional HTTP API** on Elysia with a Next.js-style router - **secure by default**: token auth, rate limiting, CORS, and a declarative rule engine.
 - **Scheduled tasks** via cron expressions or intervals.
 - **AI-agent friendly**: the whole architecture and coding rules are documented in `.agents/` for assistants like Claude Code (see [Built for AI agents](#built-for-ai-agents)).
 
@@ -58,7 +58,7 @@ Re-run `bun run deploy` whenever you add or change a command's name, description
 ## Project structure
 
 ```
-engine/          the discord.js wrapper — you rarely touch this
+engine/          the discord.js wrapper - you rarely touch this
   decorators.ts    @Command, @ContextMenu, @Prefix, @Event, @Cron, @Interval, @Register, @Route
   base/            the base classes you extend
   loaders/         discovery + mounting, one loader per feature kind
@@ -69,7 +69,7 @@ engine/          the discord.js wrapper — you rarely touch this
   ui.ts            Components V2 builder helpers
   permissions.ts   typed permission manager
 
-app/             your features — this is where you work
+app/             your features - this is where you work
   commands/        slash commands, grouped in subfolders
   context/         context-menu commands
   prefixes/        text (prefix) commands
@@ -94,12 +94,12 @@ This template is designed to be handed to an AI coding assistant (Claude Code, C
 | File | Purpose |
 | --- | --- |
 | `AGENTS.md` | Entry point. A short overview that pulls in the three docs below. |
-| `CLAUDE.md` | Claude Code entry point — imports `AGENTS.md`. |
+| `CLAUDE.md` | Claude Code entry point - imports `AGENTS.md`. |
 | `.agents/context.md` | **Architecture & public surface.** How the engine wires features, every decorator and base class, the config shape, and where each kind of logic belongs. |
 | `.agents/agents.md` | **Coding rules.** Hard constraints: no comments, one job per file, snake_case (PascalCase for types), early returns, error handling, security, and the file-placement decision tree. |
 | `.agents/tests.md` | **Testing guide.** What to test, how to drive the HTTP API without a port, and the Bun test-runner conventions. |
 
-If you use another tool, point it at `AGENTS.md`. Keeping these accurate is part of the workflow — when you change the framework surface, update `.agents/context.md` in the same change.
+If you use another tool, point it at `AGENTS.md`. Keeping these accurate is part of the workflow - when you change the framework surface, update `.agents/context.md` in the same change.
 
 ## Feature classes
 
@@ -125,7 +125,7 @@ export default class Ping extends BaseCommand {
 - `context` gives you `client`, `interaction`, `permissions`, `globals`, and command metadata.
 - Per-command shared state goes in a `globals` field and is exposed on `context.globals`.
 
-**Subcommands** — set a `subcommands` map and call `this.run_subcommands(context)` instead of a hand-written switch:
+**Subcommands** - set a `subcommands` map and call `this.run_subcommands(context)` instead of a hand-written switch:
 
 ```ts
 subcommands: Subcommands = {
@@ -138,7 +138,7 @@ async execute(context: CommandContext) {
 }
 ```
 
-**Autocomplete** — implement an optional `autocomplete(interaction)`; the engine routes focused-option interactions to it (and runs the command's guards first).
+**Autocomplete** - implement an optional `autocomplete(interaction)`; the engine routes focused-option interactions to it (and runs the command's guards first).
 
 ### Context-menu commands
 
@@ -158,7 +158,7 @@ export default class Avatar extends BaseContextMenu {
 
 ### Prefix commands
 
-Text commands (`.ping`) driven off `MessageCreate` — an alternative to slash commands. Extend `BasePrefixCommand`, describe the command with `PrefixCommandBuilder`, and read typed args off `context.args`.
+Text commands (`.ping`) driven off `MessageCreate` - an alternative to slash commands. Extend `BasePrefixCommand`, describe the command with `PrefixCommandBuilder`, and read typed args off `context.args`.
 
 ```ts
 @Prefix({ cooldown: 3, guilds: ["*"] })
@@ -176,7 +176,7 @@ export default class Avatar extends BasePrefixCommand {
 }
 ```
 
-The prefix is per-guild: it defaults to `config.prefix.default`, can be changed at runtime (persisted to storage), and — when `config.prefix.allow_mention` is on — `@bot` also works as a prefix. The whole subsystem is gated by `config.prefix.enabled`. Builder methods: `set_name`, `set_description`, `add_alias`, and typed `add_string` / `add_integer` / `add_number` / `add_boolean` / `add_user` / `add_member` / `add_channel` / `add_role` / `add_rest`.
+The prefix is per-guild: it defaults to `config.prefix.default`, can be changed at runtime (persisted to storage), and - when `config.prefix.allow_mention` is on - `@bot` also works as a prefix. The whole subsystem is gated by `config.prefix.enabled`. Builder methods: `set_name`, `set_description`, `add_alias`, and typed `add_string` / `add_integer` / `add_number` / `add_boolean` / `add_user` / `add_member` / `add_channel` / `add_role` / `add_rest`.
 
 ### Events
 
@@ -191,7 +191,7 @@ export default class Ready extends BaseEvent {
 }
 ```
 
-You never write an `InteractionCreate` or `MessageCreate` handler to route commands — the engine owns that.
+You never write an `InteractionCreate` or `MessageCreate` handler to route commands - the engine owns that.
 
 ### Scheduled tasks
 
@@ -220,8 +220,8 @@ export default class PanelButton extends ButtonComponent {
 ```
 
 - Base classes: `ButtonComponent`, `ModalComponent`, `SelectComponent` (any select), and the typed `StringSelectComponent` / `UserSelectComponent` / `RoleSelectComponent` / `ChannelSelectComponent` / `MentionableSelectComponent`.
-- `@Register` accepts `{ cooldown?, cooldown_scope?, guards? }` — the same guard + cooldown pipeline as commands runs before `execute`.
-- **Dynamic custom ids**: routing uses the segment before the first `:`, so a button with `customId` `"vote:up:<messageAuthorId>"` still routes to the `vote` handler, which reads the rest off `interaction.customId`. Because a persistent component cannot know who is allowed to click it, this is how you lock one to its invoker — encode the allowed user id and reject others in `execute`. (The collector-based helpers below handle per-user locking for you.)
+- `@Register` accepts `{ cooldown?, cooldown_scope?, guards? }` - the same guard + cooldown pipeline as commands runs before `execute`.
+- **Dynamic custom ids**: routing uses the segment before the first `:`, so a button with `customId` `"vote:up:<messageAuthorId>"` still routes to the `vote` handler, which reads the rest off `interaction.customId`. Because a persistent component cannot know who is allowed to click it, this is how you lock one to its invoker - encode the allowed user id and reject others in `execute`. (The collector-based helpers below handle per-user locking for you.)
 
 ## Guards and cooldowns
 
@@ -240,9 +240,9 @@ export default class Guarded extends BaseCommand {
 }
 ```
 
-A guard is `(context) => true | string | Promise<...>` — return `true` to pass, or a message shown to the user on denial. Built-ins: `owner_only`, `in_guild`, `dm_only`, `nsfw_only`, `has_perms(...)`, `bot_has_perms(...)`. Write custom guards as plain functions and prefer them over ad-hoc `if` checks inside `execute`.
+A guard is `(context) => true | string | Promise<...>` - return `true` to pass, or a message shown to the user on denial. Built-ins: `owner_only`, `in_guild`, `dm_only`, `nsfw_only`, `has_perms(...)`, `bot_has_perms(...)`. Write custom guards as plain functions and prefer them over ad-hoc `if` checks inside `execute`.
 
-Cooldowns are in-memory and per-process — a best-effort courtesy limit, not a hard quota (under sharding each shard tracks its own, and they reset on restart). Prefix-command aliases share the command's canonical cooldown bucket.
+Cooldowns are in-memory and per-process - a best-effort courtesy limit, not a hard quota (under sharding each shard tracks its own, and they reset on restart). Prefix-command aliases share the command's canonical cooldown bucket.
 
 ## Permissions
 
@@ -262,9 +262,9 @@ Methods: `has`, `all`, `any`, `missing`. Build one anywhere with `new Permission
 
 ## Storage, i18n, and durations
 
-- **Storage** — `store<T>(name)` from `@/lib/store` is a typed, namespaced facade (`get` / `set` / `has` / `delete` / `all` / `keys` / `clear` / `reload`) over the adapter selected by `config.storage.driver`: `"json"` (default; atomic writes, one `data/<name>.json` per namespace), `"memory"`, or `"custom"` (implement `StorageAdapter` to back it with SQLite, Redis, etc.). The JSON driver is single-process-preferred; multi-process deployments should use a database-backed custom adapter.
-- **i18n** — `t(key, locale?, vars?)` resolves JSON catalogs under `locales/`, interpolates `{vars}`, and falls back to the key. Off by default via `config.localization.enabled`.
-- **Durations** — `parse_duration("1h30m")` → ms (or `null`); `format_duration(ms)` → `"1m 30s"`. Underpins cooldowns, `@Interval`, and any timeout you expose.
+- **Storage** - `store<T>(name)` from `@/lib/store` is a typed, namespaced facade (`get` / `set` / `has` / `delete` / `all` / `keys` / `clear` / `reload`) over the adapter selected by `config.storage.driver`: `"json"` (default; atomic writes, one `data/<name>.json` per namespace), `"memory"`, or `"custom"` (implement `StorageAdapter` to back it with SQLite, Redis, etc.). The JSON driver is single-process-preferred; multi-process deployments should use a database-backed custom adapter.
+- **i18n** - `t(key, locale?, vars?)` resolves JSON catalogs under `locales/`, interpolates `{vars}`, and falls back to the key. Off by default via `config.localization.enabled`.
+- **Durations** - `parse_duration("1h30m")` → ms (or `null`); `format_duration(ms)` → `"1m 30s"`. Underpins cooldowns, `@Interval`, and any timeout you expose.
 
 ## Building messages
 
@@ -299,7 +299,7 @@ Under `@/helpers/*`:
 
 ## HTTP API
 
-An optional web layer on [Elysia](https://elysiajs.com) with a Next.js-style router. **Off by default** — set `config.server.enabled` to `true` to turn it on.
+An optional web layer on [Elysia](https://elysiajs.com) with a Next.js-style router. **Off by default** - set `config.server.enabled` to `true` to turn it on.
 
 A route extends `BaseRoute`, carries `@Route(pattern)`, and implements one async method per HTTP verb. The pattern declares the URL: `[id]` is a dynamic segment, `[...name]` a catch-all. Set an optional zod `schema` to validate `body` / `query` / `params`; invalid requests get an automatic 400.
 
@@ -327,18 +327,18 @@ Return a plain object to send JSON, or a `Response`. Every route mounts under `c
 
 ### Security (declarative, enforced centrally)
 
-All protection lives in `config.server` and is enforced in one place — never re-implement auth or rate limiting inside a route. The defaults are **secure-by-default** and only apply once the server is enabled:
+All protection lives in `config.server` and is enforced in one place - never re-implement auth or rate limiting inside a route. The defaults are **secure-by-default** and only apply once the server is enabled:
 
-- **`host: "127.0.0.1"`** — loopback only. Change it to expose the API off-box.
-- **`auth`** — bearer-token (or custom-header) auth, tokens read from the `API_TOKENS` env var, constant-time compared. Missing/invalid → 401. `public_paths` defaults to `["/health"]`.
-- **`rate_limit`** — fixed-window per-IP limiter; over the limit → 429 with `Retry-After`. In-process (per-shard under sharding).
-- **`cors`** — an allowlist (`origins` is empty by default; `["*"]` reflects any origin), with configurable methods, headers, and credentials.
-- **`rules`** — a top-down, first-match-wins list of `{ conditions, action: "deny" | "allow", status?, message? }` evaluated before auth. Conditions match on `path` / `method` / `ip` / `header` / `query` / `user_agent` with `equals` / `not_equals` / `starts_with` / `in` / `not_in` / `matches`.
+- **`host: "127.0.0.1"`** - loopback only. Change it to expose the API off-box.
+- **`auth`** - bearer-token (or custom-header) auth, tokens read from the `API_TOKENS` env var, constant-time compared. Missing/invalid → 401. `public_paths` defaults to `["/health"]`.
+- **`rate_limit`** - fixed-window per-IP limiter; over the limit → 429 with `Retry-After`. In-process (per-shard under sharding).
+- **`cors`** - an allowlist (`origins` is empty by default; `["*"]` reflects any origin), with configurable methods, headers, and credentials.
+- **`rules`** - a top-down, first-match-wins list of `{ conditions, action: "deny" | "allow", status?, message? }` evaluated before auth. Conditions match on `path` / `method` / `ip` / `header` / `query` / `user_agent` with `equals` / `not_equals` / `starts_with` / `in` / `not_in` / `matches`.
 - **`trust_proxy`** gates whether `X-Forwarded-For` is honored; **`expose_errors`** (default off) keeps 500 bodies generic.
 
 A route can opt out per-route with an `auth = false` field or `rate_limit = false | { window, max }`.
 
-> First time you enable the server: set `API_TOKENS`, list your `cors.origins`, and change `host` if it must be reachable off-box — otherwise you'll get 401s and no cross-origin access by design.
+> First time you enable the server: set `API_TOKENS`, list your `cors.origins`, and change `host` if it must be reachable off-box - otherwise you'll get 401s and no cross-origin access by design.
 
 Error responses share one shape: `{ "code": string, "message": string }` with status 400 / 401 / 403 / 404 / 429 / 500.
 
@@ -346,14 +346,14 @@ Error responses share one shape: `{ "code": string, "message": string }` with st
 
 Everything lives in `config.ts`:
 
-- `bot` — `intents` and `presence`, passed straight to the discord.js client.
-- `commands` — `default_cooldown` and `default_guilds` fill in commands that don't set them.
-- `prefix` — `enabled`, `default`, `allow_mention` for text commands.
-- `console` / `accent` — log prefix labels and the default embed colour (see [colors](#embeds-and-interactive-helpers)).
-- `owners` — bot-owner ids (from the `OWNERS` env var), consumed by the `owner_only` guard.
-- `storage` — `{ driver, adapter? }` selecting the persistence backend.
-- `localization` — `{ enabled, default, directory }` for i18n.
-- `server` — the HTTP API and its security blocks (above).
+- `bot` - `intents` and `presence`, passed straight to the discord.js client.
+- `commands` - `default_cooldown` and `default_guilds` fill in commands that don't set them.
+- `prefix` - `enabled`, `default`, `allow_mention` for text commands.
+- `console` / `accent` - log prefix labels and the default embed colour (see [colors](#embeds-and-interactive-helpers)).
+- `owners` - bot-owner ids (from the `OWNERS` env var), consumed by the `owner_only` guard.
+- `storage` - `{ driver, adapter? }` selecting the persistence backend.
+- `localization` - `{ enabled, default, directory }` for i18n.
+- `server` - the HTTP API and its security blocks (above).
 
 ## Logging
 
@@ -372,7 +372,7 @@ Tests run on the Bun test runner:
 bun test
 ```
 
-The suite covers permissions, the Components V2 helpers, cooldowns, storage, prefix parsing, the guard/cooldown pipeline, the rules engine, the rate limiter, and the HTTP API (auth, rate limiting, CORS, dynamic params, catch-all segments, validation, and error handling). Drive the API with `app.handle(new Request(...))` — no bound port needed. Add tests under `tests/` as `*.test.ts`; see `.agents/tests.md`.
+The suite covers permissions, the Components V2 helpers, cooldowns, storage, prefix parsing, the guard/cooldown pipeline, the rules engine, the rate limiter, and the HTTP API (auth, rate limiting, CORS, dynamic params, catch-all segments, validation, and error handling). Drive the API with `app.handle(new Request(...))` - no bound port needed. Add tests under `tests/` as `*.test.ts`; see `.agents/tests.md`.
 
 ## Scripts
 
