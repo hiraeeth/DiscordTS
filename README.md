@@ -1,90 +1,6 @@
 # DiscordTS Base
 
-A decorator driven Discord bot template built with TypeScript, discord.js v14, and Bun. You write small feature classes, drop them in a folder, and the engine discovers, mounts, and wires them for you. There is no database and no boilerplate to maintain.
-
-## Requirements
-
-- [Bun](https://bun.sh) 1.1 or newer
-- A Discord application with a bot token and client id
-
-## Getting started
-
-1. Install dependencies:
-
-   ```bash
-   bun install
-   ```
-
-2. Create a `.env` file from the example and fill in your credentials:
-
-   ```bash
-   cp .env.example .env
-   ```
-
-   ```
-   TOKEN=your_bot_token
-   CLIENT_ID=your_application_id
-   ```
-
-3. Register your slash commands with Discord (run this whenever your command definitions change):
-
-   ```bash
-   bun run deploy
-   ```
-
-4. Run in development with hot reload:
-
-   ```bash
-   bun run dev
-   ```
-
-## Project structure
-
-```
-engine/        the discord.js wrapper: decorators, base classes, loaders, dispatch, ui, permissions
-app/
-  commands/    slash commands, grouped in subfolders
-  events/      gateway event handlers
-  components/  button, modal, and select handlers
-  routes/      HTTP API routes (@Route classes)
-lib/           cross cutting helpers: logger and colors
-config.ts      central configuration: bot, commands, server
-index.ts       entrypoint: installs the console patch and boots the engine
-```
-
-You only edit files under `app/` and `config.ts`. Everything in `engine/` is the framework.
-
-## Configuration
-
-All settings live in `config.ts`:
-
-```ts
-export const config = {
-	bot: {
-		intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers, GatewayIntentBits.MessageContent],
-		presence: { status: "online", activities: [{ name: "the server", type: ActivityType.Watching }] },
-	},
-	commands: {
-		default_cooldown: 0,
-		default_guilds: ["*"],
-	},
-	server: {
-		enabled: false,
-		host: "0.0.0.0",
-		port: 3000,
-		prefix: "/api",
-		cors: true,
-	},
-};
-```
-
-- `bot.intents` and `bot.presence` are passed straight to the discord.js client.
-- `commands.default_cooldown` and `commands.default_guilds` fill in any command that does not set them in `@Command`.
-- `server` controls the HTTP API described below.
-
-## Commands
-
-A command is a class that extends `BaseCommand` and carries the `@Command` decorator. Set the slash builder on `data` and implement `execute`. Files live in `app/commands/<group>/<name>.ts`.
+A decorator-driven Discord bot template built with **TypeScript**, **discord.js v14**, and **Bun**. You write small feature classes, drop them in a folder, and the engine discovers, instantiates, injects the client, and wires them at startup. No manual registration, no database, no boilerplate to maintain.
 
 ```ts
 import { SlashCommandBuilder } from "discord.js";
@@ -100,32 +16,173 @@ export default class Ping extends BaseCommand {
 }
 ```
 
-- `cooldown` is in seconds and is enforced by the engine.
-- `guilds` is a list of guild ids, or `["*"]` to register the command globally.
-- `context` gives you `client`, `interaction`, `permissions`, `globals`, and the command metadata.
+That is a complete, working command. Save it under `app/commands/` and it is live on the next boot.
 
-Per command shared state goes in a `globals` field and is available on `context.globals`:
+## Highlights
+
+- **Decorator-driven.** `@Command`, `@ContextMenu`, `@Prefix`, `@Event`, `@Cron`, `@Interval`, `@Register`, `@Route` — declare a class, drop the file, done.
+- **Slash + text + context-menu commands**, subcommand routing, and autocomplete.
+- **Guards and scoped cooldowns** run before every handler (`owner_only`, `has_perms(...)`, custom functions; per user/guild/channel/global).
+- **Typed permissions**, channel-aware, with autocompleting permission names.
+- **Batteries-included UI**: Components V2 helpers, embeds, pagination, interactive settings panels, confirm/alert dialogs, and modal forms.
+- **Pluggable storage** (JSON / memory / your own adapter), per-guild prefixes, i18n, duration parsing, and a scoped cooldown manager.
+- **Optional HTTP API** on Elysia with a Next.js-style router — **secure by default**: token auth, rate limiting, CORS, and a declarative rule engine.
+- **Scheduled tasks** via cron expressions or intervals.
+- **AI-agent friendly**: the whole architecture and coding rules are documented in `.agents/` for assistants like Claude Code (see [Built for AI agents](#built-for-ai-agents)).
+
+## Requirements
+
+- [Bun](https://bun.sh) 1.1 or newer
+- A Discord application with a bot token and client id
+
+## Quick start
+
+```bash
+bun install                 # install dependencies
+cp .env.example .env        # then fill in your credentials
+bun run deploy              # register slash/context-menu commands with Discord
+bun run dev                 # run with hot reload
+```
+
+Your `.env`:
+
+```
+TOKEN=your_bot_token
+CLIENT_ID=your_application_id
+OWNERS=comma,separated,user,ids     # optional, powers the owner_only guard
+API_TOKENS=comma,separated,tokens   # optional, only needed if you enable the HTTP API
+```
+
+Re-run `bun run deploy` whenever you add or change a command's name, description, options, or guild scope.
+
+## Project structure
+
+```
+engine/          the discord.js wrapper — you rarely touch this
+  decorators.ts    @Command, @ContextMenu, @Prefix, @Event, @Cron, @Interval, @Register, @Route
+  base/            the base classes you extend
+  loaders/         discovery + mounting, one loader per feature kind
+  dispatch.ts      interaction router (guards, cooldowns, error replies)
+  prefix_dispatch.ts   MessageCreate router for prefix commands
+  guards.ts        precondition guards
+  rules.ts         declarative HTTP request rules
+  ui.ts            Components V2 builder helpers
+  permissions.ts   typed permission manager
+
+app/             your features — this is where you work
+  commands/        slash commands, grouped in subfolders
+  context/         context-menu commands
+  prefixes/        text (prefix) commands
+  events/          gateway event handlers
+  tasks/           scheduled tasks (cron / interval)
+  components/      button, modal, and select handlers
+  routes/          HTTP API routes
+
+helpers/         embeds, pagination, panel, dialog, form, color
+lib/             logger, colors, storage, cooldowns, prefixes, duration, i18n, ratelimit, runtime
+config.ts        central configuration
+index.ts         entrypoint: installs the console patch and boots the engine
+.agents/         architecture + coding rules for AI assistants
+```
+
+You only edit files under `app/`, `helpers/` (if extending), `lib/` (for new capabilities), and `config.ts`. Everything in `engine/` is the framework.
+
+## Built for AI agents
+
+This template is designed to be handed to an AI coding assistant (Claude Code, Cursor, etc.) with minimal ramp-up. The conventions live in version-controlled Markdown that agents read automatically:
+
+| File | Purpose |
+| --- | --- |
+| `AGENTS.md` | Entry point. A short overview that pulls in the three docs below. |
+| `CLAUDE.md` | Claude Code entry point — imports `AGENTS.md`. |
+| `.agents/context.md` | **Architecture & public surface.** How the engine wires features, every decorator and base class, the config shape, and where each kind of logic belongs. |
+| `.agents/agents.md` | **Coding rules.** Hard constraints: no comments, one job per file, snake_case (PascalCase for types), early returns, error handling, security, and the file-placement decision tree. |
+| `.agents/tests.md` | **Testing guide.** What to test, how to drive the HTTP API without a port, and the Bun test-runner conventions. |
+
+If you use another tool, point it at `AGENTS.md`. Keeping these accurate is part of the workflow — when you change the framework surface, update `.agents/context.md` in the same change.
+
+## Feature classes
+
+Every mountable feature is a `default export class` that extends a base class and carries a decorator. The base class injects `this.client` and fixes the `execute` signature; the decorator supplies registration metadata.
+
+### Commands
+
+Extend `BaseCommand`, set a `SlashCommandBuilder` on `data`, implement `execute`.
 
 ```ts
-@Command({ guilds: ["*"] })
+@Command({ cooldown: 5, cooldown_scope: "user", guilds: ["*"] })
 export default class Ping extends BaseCommand {
-	data = new SlashCommandBuilder().setName("ping").setDescription("Ping");
-	globals = { greeting: "Pong" };
+	data = new SlashCommandBuilder().setName("ping").setDescription("Replies with Pong!");
 
 	async execute(context: CommandContext) {
-		await context.interaction.reply(String(context.globals.greeting));
+		await context.interaction.reply("Pong!");
 	}
 }
 ```
 
-## Events
+- `cooldown` is in seconds; `cooldown_scope` is `"user"` (default), `"guild"`, `"channel"`, or `"global"`.
+- `guilds` is a list of guild ids, or `["*"]` to register globally. Omitted options fall back to `config.commands`.
+- `context` gives you `client`, `interaction`, `permissions`, `globals`, and command metadata.
+- Per-command shared state goes in a `globals` field and is exposed on `context.globals`.
 
-An event is a class that extends `BaseEvent` and carries `@Event`. The first argument is a discord.js `Events` value. Use `{ once: true }` for one time events like ready.
+**Subcommands** — set a `subcommands` map and call `this.run_subcommands(context)` instead of a hand-written switch:
 
 ```ts
-import { Events, Client } from "discord.js";
-import { Event, BaseEvent } from "engine";
+subcommands: Subcommands = {
+	status: (context) => this.status(context),
+	"config/set": (context) => this.set(context),
+};
 
+async execute(context: CommandContext) {
+	await this.run_subcommands(context);
+}
+```
+
+**Autocomplete** — implement an optional `autocomplete(interaction)`; the engine routes focused-option interactions to it (and runs the command's guards first).
+
+### Context-menu commands
+
+Right-click commands on users or messages. Extend `BaseContextMenu`, set a `ContextMenuCommandBuilder`. Registered by `bun run deploy` alongside slash commands.
+
+```ts
+@ContextMenu({ guilds: ["*"] })
+export default class Avatar extends BaseContextMenu {
+	data = new ContextMenuCommandBuilder().setName("Avatar").setType(ApplicationCommandType.User);
+
+	async execute(context: ContextMenuContext) {
+		if (!context.interaction.isUserContextMenuCommand()) return;
+		await context.interaction.reply(context.interaction.targetUser.displayAvatarURL());
+	}
+}
+```
+
+### Prefix commands
+
+Text commands (`.ping`) driven off `MessageCreate` — an alternative to slash commands. Extend `BasePrefixCommand`, describe the command with `PrefixCommandBuilder`, and read typed args off `context.args`.
+
+```ts
+@Prefix({ cooldown: 3, guilds: ["*"] })
+export default class Avatar extends BasePrefixCommand {
+	data = new PrefixCommandBuilder()
+		.set_name("avatar")
+		.set_description("Show a user's avatar.")
+		.add_alias("av")
+		.add_user("target", "Whose avatar to show");
+
+	async execute(context: PrefixContext) {
+		const user = (context.args.target as User) ?? context.message.author;
+		await context.message.reply(user.displayAvatarURL());
+	}
+}
+```
+
+The prefix is per-guild: it defaults to `config.prefix.default`, can be changed at runtime (persisted to storage), and — when `config.prefix.allow_mention` is on — `@bot` also works as a prefix. The whole subsystem is gated by `config.prefix.enabled`. Builder methods: `set_name`, `set_description`, `add_alias`, and typed `add_string` / `add_integer` / `add_number` / `add_boolean` / `add_user` / `add_member` / `add_channel` / `add_role` / `add_rest`.
+
+### Events
+
+Extend `BaseEvent`, carry `@Event(name, { once? })` where `name` is a discord.js `Events` value.
+
+```ts
 @Event(Events.ClientReady, { once: true })
 export default class Ready extends BaseEvent {
 	async execute(client: Client) {
@@ -134,17 +191,27 @@ export default class Ready extends BaseEvent {
 }
 ```
 
-You never write an `InteractionCreate` event to route commands or components. The engine owns that.
+You never write an `InteractionCreate` or `MessageCreate` handler to route commands — the engine owns that.
 
-## Components
+### Scheduled tasks
 
-A component handles an interaction from a button, a modal, or a select menu. Extend the matching base class, register it with `@Register(id)`, and implement `execute`. The `id` is the `customId` of the component you send.
+Extend `BaseTask` and carry `@Cron("*/5 * * * *")` (5-field cron, evaluated each minute) or `@Interval("30s")` (a duration string or raw ms). Never hand-roll a `setInterval` in a feature.
 
 ```ts
-import type { ButtonInteraction } from "discord.js";
-import { Register, ButtonComponent } from "engine";
+@Interval("30s")
+export default class Presence extends BaseTask {
+	async execute() {
+		this.client.user?.setActivity(`${this.client.guilds.cache.size} servers`);
+	}
+}
+```
 
-@Register("panel_button")
+### Components
+
+Handlers for buttons, modals, and select menus. Extend the matching base class, register with `@Register(id, options?)`, implement `execute`. The `id` matches the `customId` you send.
+
+```ts
+@Register("panel_button", { cooldown: 3 })
 export default class PanelButton extends ButtonComponent {
 	async execute(interaction: ButtonInteraction) {
 		await interaction.reply("You clicked the button!");
@@ -152,19 +219,60 @@ export default class PanelButton extends ButtonComponent {
 }
 ```
 
-Available base classes:
+- Base classes: `ButtonComponent`, `ModalComponent`, `SelectComponent` (any select), and the typed `StringSelectComponent` / `UserSelectComponent` / `RoleSelectComponent` / `ChannelSelectComponent` / `MentionableSelectComponent`.
+- `@Register` accepts `{ cooldown?, cooldown_scope?, guards? }` — the same guard + cooldown pipeline as commands runs before `execute`.
+- **Dynamic custom ids**: routing uses the segment before the first `:`, so a button with `customId` `"vote:up:<messageAuthorId>"` still routes to the `vote` handler, which reads the rest off `interaction.customId`. Because a persistent component cannot know who is allowed to click it, this is how you lock one to its invoker — encode the allowed user id and reject others in `execute`. (The collector-based helpers below handle per-user locking for you.)
 
-- `ButtonComponent`
-- `ModalComponent`
-- `SelectComponent` for any select menu
-- `StringSelectComponent`, `UserSelectComponent`, `RoleSelectComponent`, `ChannelSelectComponent`, `MentionableSelectComponent` for a typed `execute` argument
+## Guards and cooldowns
 
-## Components V2
-
-`engine` exports helpers for Discord Components V2, so you can build rich layouts without touching raw flags or JSON. Wrap your top level components in `view(...)` and reply with the result.
+Both dispatchers run the same pipeline before `execute`: **guards**, then **cooldown**.
 
 ```ts
-import { ButtonStyle } from "discord.js";
+import { Command, BaseCommand, CommandContext, in_guild, has_perms } from "engine";
+
+@Command({ cooldown: 10, guards: [in_guild, has_perms("ManageGuild")] })
+export default class Guarded extends BaseCommand {
+	data = new SlashCommandBuilder().setName("guarded").setDescription("Managers only, once every 10s.");
+
+	async execute(context: CommandContext) {
+		await context.interaction.reply("You passed the guards.");
+	}
+}
+```
+
+A guard is `(context) => true | string | Promise<...>` — return `true` to pass, or a message shown to the user on denial. Built-ins: `owner_only`, `in_guild`, `dm_only`, `nsfw_only`, `has_perms(...)`, `bot_has_perms(...)`. Write custom guards as plain functions and prefer them over ad-hoc `if` checks inside `execute`.
+
+Cooldowns are in-memory and per-process — a best-effort courtesy limit, not a hard quota (under sharding each shard tracks its own, and they reset on restart). Prefix-command aliases share the command's canonical cooldown bucket.
+
+## Permissions
+
+Commands receive a ready `Permissions` instance on `context.permissions`, built from the invoking member and resolved against the current channel. Permission names are typed, so your editor autocompletes them and catches typos.
+
+```ts
+async execute(context: CommandContext) {
+	if (!context.permissions.has("ManageGuild")) {
+		await context.interaction.reply("You need the Manage Server permission.");
+		return;
+	}
+	await context.interaction.reply("Welcome, moderator.");
+}
+```
+
+Methods: `has`, `all`, `any`, `missing`. Build one anywhere with `new Permissions(holder)` where `holder` is a `GuildMember`, a `PermissionsBitField`, or `null` (a null holder returns `false` rather than throwing).
+
+## Storage, i18n, and durations
+
+- **Storage** — `store<T>(name)` from `@/lib/store` is a typed, namespaced facade (`get` / `set` / `has` / `delete` / `all` / `keys` / `clear` / `reload`) over the adapter selected by `config.storage.driver`: `"json"` (default; atomic writes, one `data/<name>.json` per namespace), `"memory"`, or `"custom"` (implement `StorageAdapter` to back it with SQLite, Redis, etc.). The JSON driver is single-process-preferred; multi-process deployments should use a database-backed custom adapter.
+- **i18n** — `t(key, locale?, vars?)` resolves JSON catalogs under `locales/`, interpolates `{vars}`, and falls back to the key. Off by default via `config.localization.enabled`.
+- **Durations** — `parse_duration("1h30m")` → ms (or `null`); `format_duration(ms)` → `"1m 30s"`. Underpins cooldowns, `@Interval`, and any timeout you expose.
+
+## Building messages
+
+### Components V2
+
+`engine` exports snake_case helpers over Discord's Components V2 so you never touch raw flags or JSON. Wrap top-level components in `view(...)` and reply with the result.
+
+```ts
 import { view, container, text, separator, section, ButtonBuilder } from "engine";
 
 const layout = container(
@@ -176,39 +284,24 @@ const layout = container(
 await interaction.reply(view(layout));
 ```
 
-Helpers: `container`, `section`, `text`, `separator`, `thumbnail`, `gallery`, `file`, and `view`. The underlying builders (`ContainerBuilder`, `ButtonBuilder`, and the rest) are re-exported from `engine` when you need them directly.
+Helpers: `container`, `section`, `text`, `separator`, `thumbnail`, `gallery`, `file`, `view`.
 
-## Permissions
+### Embeds and interactive helpers
 
-Commands receive a ready to use `Permissions` instance on `context.permissions`, built from the member who ran the command. Permission names are typed, so your editor autocompletes them and catches typos.
+Under `@/helpers/*`:
 
-```ts
-async execute(context: CommandContext) {
-	if (!context.permissions.has("ManageGuild")) {
-		await context.interaction.reply("You need the Manage Server permission.");
-		return;
-	}
-
-	await context.interaction.reply("Welcome, moderator.");
-}
-```
-
-Methods: `has(permission)`, `all(permissions)`, `any(permissions)`, and `missing(permission)`. You can build one anywhere with `new Permissions(holder)` where `holder` is a `GuildMember`, a `PermissionsBitField`, or `null`. A null holder returns `false` instead of throwing.
-
-## Logging
-
-At startup the engine patches `console` so every call is also written to a dated file in `logs/`:
-
-- `console.log`, `console.warn`, and `console.debug` go to `logs/log_DD_MM_YY.log`
-- `console.error` goes to `logs/errors_DD_MM_YY.log`
-
-Color codes are stripped before writing. The original, non persisting functions stay available as `console._raw_log`, `console._raw_warn`, `console._raw_debug`, and `console._raw_error`.
+- **`embed(options)`** turns a plain object into an `EmbedBuilder`; `success` / `error` / `warning` / `info` / `neutral` are colour presets; `lines_to_pages` / `fields_to_pages` chunk data into pages.
+- **`paginate(target, pages, options?)`** drives an `EmbedBuilder[]` with first/prev/next/last buttons; works with both slash interactions and messages, and locks to the invoker by default.
+- **`panel(target, { settings, ... })`** renders an interactive settings panel (boolean / text / number / choice) backed by your own `get`/`set` callbacks.
+- **`dialog` / `confirm` / `alert`** are button prompts; `confirm` resolves to a boolean.
+- **`form(target, { fields })`** shows a modal and returns typed values.
+- **`color(...)`** is a polymorphic colour value (hex / int / rgb / hsl / css) usable anywhere a helper takes a colour.
 
 ## HTTP API
 
-The web layer runs on [Elysia](https://elysiajs.com) with a Next.js style router. It is off by default. Turn it on by setting `server.enabled` to `true` in `config.ts`.
+An optional web layer on [Elysia](https://elysiajs.com) with a Next.js-style router. **Off by default** — set `config.server.enabled` to `true` to turn it on.
 
-A route is a class that extends `BaseRoute` and carries `@Route(pattern)`. The pattern declares the URL and its parameters: `[id]` is a dynamic segment and `[...name]` is a catch all. Add one async method per HTTP verb you want to handle. Set an optional `schema` of zod validators to validate input; invalid requests get an automatic 400.
+A route extends `BaseRoute`, carries `@Route(pattern)`, and implements one async method per HTTP verb. The pattern declares the URL: `[id]` is a dynamic segment, `[...name]` a catch-all. Set an optional zod `schema` to validate `body` / `query` / `params`; invalid requests get an automatic 400.
 
 ```ts
 import { Route, BaseRoute, RouteContext, RouteSchemas, z } from "engine";
@@ -217,9 +310,7 @@ const body = z.object({ content: z.string() });
 
 @Route("/guilds/[id]")
 export default class GuildRoute extends BaseRoute {
-	schema: RouteSchemas = {
-		POST: { body },
-	};
+	schema: RouteSchemas = { POST: { body } };
 
 	async GET({ client, params }: RouteContext<{ id: string }>) {
 		const guild = client.guilds.cache.get(params.id);
@@ -232,28 +323,46 @@ export default class GuildRoute extends BaseRoute {
 }
 ```
 
-Validators can cover `body`, `query`, and `params`; `z` is re-exported from `engine`.
+Return a plain object to send JSON, or a `Response`. Every route mounts under `config.server.prefix` (default `/api`), so the example serves `GET /api/guilds/:id`. The engine adds a `/health` route, logs each request, and returns structured JSON for unknown routes.
 
-Each verb method receives a context with `client`, `params`, `query`, `body`, `request`, and `set` (status and headers). Return a plain object to send JSON, or a `Response`. Every route is mounted under `server.prefix`, so the example above serves `GET /api/guilds/:id`. The engine also adds a `/health` route, logs each request, applies CORS, and returns structured JSON for unknown routes and invalid payloads. The URL comes from `@Route`, so name your files under `app/routes/` however you like.
+### Security (declarative, enforced centrally)
 
-### API reference
+All protection lives in `config.server` and is enforced in one place — never re-implement auth or rate limiting inside a route. The defaults are **secure-by-default** and only apply once the server is enabled:
 
-These are the routes shipped in the template, all under the `server.prefix` (default `/api`).
+- **`host: "127.0.0.1"`** — loopback only. Change it to expose the API off-box.
+- **`auth`** — bearer-token (or custom-header) auth, tokens read from the `API_TOKENS` env var, constant-time compared. Missing/invalid → 401. `public_paths` defaults to `["/health"]`.
+- **`rate_limit`** — fixed-window per-IP limiter; over the limit → 429 with `Retry-After`. In-process (per-shard under sharding).
+- **`cors`** — an allowlist (`origins` is empty by default; `["*"]` reflects any origin), with configurable methods, headers, and credentials.
+- **`rules`** — a top-down, first-match-wins list of `{ conditions, action: "deny" | "allow", status?, message? }` evaluated before auth. Conditions match on `path` / `method` / `ip` / `header` / `query` / `user_agent` with `equals` / `not_equals` / `starts_with` / `in` / `not_in` / `matches`.
+- **`trust_proxy`** gates whether `X-Forwarded-For` is honored; **`expose_errors`** (default off) keeps 500 bodies generic.
 
-| Method | Path | Body | Description |
-| --- | --- | --- | --- |
-| GET | `/health` | none | Liveness probe. Returns `{ "status": "ok" }`. |
-| GET | `/guilds/:id` | none | Looks the guild up in the bot cache. Returns `{ "id", "name" }` where `name` is `null` when the bot is not in that guild. |
-| POST | `/guilds/:id` | `{ "content": string }` | Validated with a schema. Returns `{ "id", "content" }`, or `400 { "code": "invalid_request" }` when the body is invalid. |
-| GET | `/files/*path` | none | Catch-all example. Returns `{ "path": string }` with everything after `/files/`. |
+A route can opt out per-route with an `auth = false` field or `rate_limit = false | { window, max }`.
 
-Error responses share one shape:
+> First time you enable the server: set `API_TOKENS`, list your `cors.origins`, and change `host` if it must be reachable off-box — otherwise you'll get 401s and no cross-origin access by design.
 
-| Status | Body |
-| --- | --- |
-| 400 | `{ "code": "invalid_request", "message": "..." }` |
-| 404 | `{ "code": "route_not_found", "message": "..." }` |
-| 500 | `{ "code": "internal_error", "message": "..." }` |
+Error responses share one shape: `{ "code": string, "message": string }` with status 400 / 401 / 403 / 404 / 429 / 500.
+
+## Configuration
+
+Everything lives in `config.ts`:
+
+- `bot` — `intents` and `presence`, passed straight to the discord.js client.
+- `commands` — `default_cooldown` and `default_guilds` fill in commands that don't set them.
+- `prefix` — `enabled`, `default`, `allow_mention` for text commands.
+- `console` / `accent` — log prefix labels and the default embed colour (see [colors](#embeds-and-interactive-helpers)).
+- `owners` — bot-owner ids (from the `OWNERS` env var), consumed by the `owner_only` guard.
+- `storage` — `{ driver, adapter? }` selecting the persistence backend.
+- `localization` — `{ enabled, default, directory }` for i18n.
+- `server` — the HTTP API and its security blocks (above).
+
+## Logging
+
+At startup the engine patches `console` so every call is also written to a dated file in `logs/`:
+
+- `console.log` / `warn` / `debug` → `logs/log_DD_MM_YY.log`
+- `console.error` → `logs/errors_DD_MM_YY.log`
+
+Colour codes are stripped before writing. The original non-persisting functions stay available as `console._raw_log` / `_raw_warn` / `_raw_debug` / `_raw_error`. Never log a token or secret.
 
 ## Testing
 
@@ -263,40 +372,34 @@ Tests run on the Bun test runner:
 bun test
 ```
 
-The suite covers the permission manager, the Components V2 helpers, and the HTTP API (dynamic params, catch-all segments, body validation, and error handling). Add new tests under `tests/` as `*.test.ts`.
+The suite covers permissions, the Components V2 helpers, cooldowns, storage, prefix parsing, the guard/cooldown pipeline, the rules engine, the rate limiter, and the HTTP API (auth, rate limiting, CORS, dynamic params, catch-all segments, validation, and error handling). Drive the API with `app.handle(new Request(...))` — no bound port needed. Add tests under `tests/` as `*.test.ts`; see `.agents/tests.md`.
 
-## Formatting and linting
-
-Prettier and ESLint keep the code consistent:
+## Scripts
 
 ```bash
-bun run format        # apply Prettier
-bun run format:check  # verify formatting
-bun run lint          # run ESLint
+bun run dev            # watch mode
+bun run build          # type-check, then bundle to dist/
+bun run start          # run the built bundle
+bun run deploy         # register slash + context-menu commands
+bun run shard          # build and launch under a ShardingManager
+bun run test           # run the test suite
+bun run typecheck      # tsc --noEmit
+bun run lint           # ESLint
+bun run format         # Prettier (write)  ·  format:check to verify
 ```
-
-Both run in CI, so keep them clean.
 
 ## Continuous integration
 
 Two workflows live in `.github/workflows/`:
 
-- `ci.yml` runs on every push and pull request. It installs dependencies, checks formatting, lints, type checks, builds, and runs the tests.
-- `release.yml` publishes a GitHub release. On a push to `main` it reads the version from `package.json` and, if the tag `v{version}` does not exist yet, creates a stable release for it. Run it manually with the `canary` channel to publish a prerelease tagged `v{version}-canary.{run}`. Either way the release body is the commit changelog since the previous tag. Bump the version in `package.json` to cut a new stable release.
+- **`ci.yml`** runs on every push and pull request: install, format check, lint, type-check, build, test.
+- **`release.yml`** publishes a GitHub release. On a push to `main` it reads the version from `package.json` and, if the tag `v{version}` does not exist, creates a stable release for it. Run it manually on the `canary` channel for a prerelease tagged `v{version}-canary.{run}`. The release body is the commit changelog since the previous tag. **Bump `version` in `package.json` to cut a new stable release.**
 
-## Building for production
-
-```bash
-bun run build
-```
-
-This type checks the project and bundles `index.ts` to `dist/`. Start the built app with:
+## Building and running in production
 
 ```bash
-bun run start
+bun run build && bun run start
 ```
-
-## Sharding
 
 For large bots, run under discord.js sharding instead of `start`:
 
@@ -304,14 +407,16 @@ For large bots, run under discord.js sharding instead of `start`:
 bun run shard
 ```
 
-This builds the app and launches a `ShardingManager` that spawns `dist/index.js` across the recommended number of shards. Each shard reads its shard list from the environment automatically, and only the primary shard serves the HTTP API.
+This launches a `ShardingManager` that spawns `dist/index.js` across the recommended number of shards. Each shard reads its shard list from the environment, and only the primary shard serves the HTTP API.
 
 ## Docker
-
-Build and run with Docker Compose:
 
 ```bash
 docker compose up --build
 ```
 
 The compose file reads your credentials from `.env`. Adjust the exposed port if you enable the web server.
+
+## License
+
+ISC.

@@ -4,7 +4,7 @@ import { registration_of } from "../registry";
 import { scan, import_module, relative } from "./scan";
 import type { BaseEvent } from "../base/event";
 
-export async function load_events(directory: string): Promise<void> {
+export async function load_events(directory: string): Promise<number> {
 	let count = 0;
 
 	for (const file of scan(directory)) {
@@ -30,7 +30,5 @@ export async function load_events(directory: string): Promise<void> {
 		count++;
 	}
 
-	if (count > 0) {
-		console.log(`${color.fg.cyan}App ${color.reset}‣ Loaded ${color.fg.cyan}${count}${color.reset} ${count > 1 ? "events" : "event"}.`);
-	}
+	return count;
 }

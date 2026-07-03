@@ -1,4 +1,4 @@
-export default {
+const palette = {
 	reset: "\x1b[0m",
 	bright: "\x1b[1m",
 	dim: "\x1b[2m",
@@ -17,7 +17,7 @@ export default {
 		cyan: "\x1b[36m",
 		white: "\x1b[37m",
 		gray: "\x1b[90m",
-		crimson: "\x1b[38m",
+		crimson: "\x1b[38;2;220;20;60m",
 	},
 	bg: {
 		black: "\x1b[40m",
@@ -29,6 +29,10 @@ export default {
 		cyan: "\x1b[46m",
 		white: "\x1b[47m",
 		gray: "\x1b[100m",
-		crimson: "\x1b[48m",
+		crimson: "\x1b[48;2;220;20;60m",
 	},
 };
+
+export type Color = keyof typeof palette.fg;
+
+export default palette;

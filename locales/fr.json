@@ -1,0 +1,5 @@
+{
+	"hello": {
+		"greeting": "Bonjour, {user} !"
+	}
+}

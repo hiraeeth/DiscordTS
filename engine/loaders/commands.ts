@@ -5,7 +5,7 @@ import { registration_of } from "../registry";
 import { scan, import_module, relative } from "./scan";
 import type { BaseCommand } from "../base/command";
 
-export async function load_commands(directory: string): Promise<void> {
+export async function load_commands(directory: string): Promise<number> {
 	for (const file of scan(directory)) {
 		const feature = (await import_module(file)).default;
 		if (!feature) continue;
@@ -23,9 +23,12 @@ export async function load_commands(directory: string): Promise<void> {
 			instance,
 			data: instance.data,
 			cooldown: registration.options.cooldown ?? config.commands.default_cooldown,
+			cooldown_scope: registration.options.cooldown_scope,
 			guilds: registration.options.guilds ?? config.commands.default_guilds,
+			guards: registration.options.guards,
 			globals: instance.globals,
-			used: new Date(0),
 		});
 	}
+
+	return client.commands.size;
 }

@@ -1,9 +1,12 @@
-import type { CommandOptions, EventOptions } from "./types";
+import type { CommandOptions, ComponentOptions, EventOptions, PrefixOptions, TaskOptions } from "./types";
 
 export type Registration =
 	| { kind: "command"; options: CommandOptions }
+	| { kind: "context"; options: CommandOptions }
+	| { kind: "prefix"; options: PrefixOptions }
 	| { kind: "event"; options: EventOptions & { name: string } }
-	| { kind: "component"; options: { id: string } }
+	| { kind: "task"; options: TaskOptions }
+	| { kind: "component"; options: ComponentOptions & { id: string } }
 	| { kind: "route"; options: { pattern: string } };
 
 const registrations = new Map<Function, Registration>();

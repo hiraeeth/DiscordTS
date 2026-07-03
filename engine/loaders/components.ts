@@ -1,10 +1,11 @@
 import color from "@/lib/colors";
+import { config } from "config";
 import { client } from "../client";
 import { registration_of } from "../registry";
 import { scan, import_module, relative } from "./scan";
 import type { Component } from "../base/component";
 
-export async function load_components(directory: string): Promise<void> {
+export async function load_components(directory: string): Promise<number> {
 	for (const file of scan(directory)) {
 		const feature = (await import_module(file)).default;
 		if (!feature) continue;
@@ -19,10 +20,13 @@ export async function load_components(directory: string): Promise<void> {
 		instance.client = client;
 		instance.id = registration.options.id;
 
-		client.components.set(`${instance.kind}_${instance.id}`, instance);
+		client.components.set(`${instance.kind}_${instance.id}`, {
+			instance,
+			cooldown: registration.options.cooldown ?? config.commands.default_cooldown,
+			cooldown_scope: registration.options.cooldown_scope,
+			guards: registration.options.guards,
+		});
 	}
 
-	if (client.components.size > 0) {
-		console.log(`${color.fg.cyan}App ${color.reset}‣ Loaded ${color.fg.cyan}${client.components.size}${color.reset} ${client.components.size > 1 ? "components" : "component"}.`);
-	}
+	return client.components.size;
 }

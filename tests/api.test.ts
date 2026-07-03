@@ -11,6 +11,8 @@ const json = (body: unknown) => ({ method: "POST", headers: { "content-type": "a
 beforeAll(async () => {
 	config.server.enabled = true;
 	config.server.port = 39555;
+	config.server.auth.enabled = false;
+	config.server.rate_limit.enabled = false;
 	const { load_routes } = await import("@/engine/loaders/routes");
 	app = await load_routes("./app/routes");
 });

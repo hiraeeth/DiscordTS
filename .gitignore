@@ -1,5 +1,6 @@
 node_modules
 logs
+data
 build
 dist
 npm-debug.log

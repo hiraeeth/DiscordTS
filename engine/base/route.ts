@@ -25,9 +25,16 @@ export interface RouteSchema {
 
 export type RouteSchemas = Partial<Record<Verb, RouteSchema>>;
 
+export interface RouteRateLimit {
+	window: string;
+	max: number;
+}
+
 export abstract class BaseRoute {
 	client!: Client;
 	schema?: RouteSchemas;
+	auth?: boolean;
+	rate_limit?: false | RouteRateLimit;
 
 	GET?(context: RouteContext): unknown;
 	POST?(context: RouteContext): unknown;

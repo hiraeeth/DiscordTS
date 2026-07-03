@@ -1,10 +1,17 @@
+import { createHash, timingSafeEqual } from "crypto";
 import { Elysia } from "elysia";
 import { cors } from "@elysiajs/cors";
 import color from "@/lib/colors";
+import { tags } from "@/lib/tags";
 import { config } from "config";
+import { parse_duration } from "@/lib/duration";
+import { rate_limiter } from "@/lib/ratelimit";
 import { client } from "../client";
 import { registration_of } from "../registry";
+import { evaluate_rules } from "../rules";
 import { scan, import_module, relative } from "./scan";
+import type { RuleRequest } from "../rules";
+import type { AuthConfig } from "../server_config";
 import type { ZodType } from "zod";
 import type { BaseRoute, RouteContext, ResponseControls, Verb } from "../base/route";
 
@@ -12,12 +19,17 @@ const VERBS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"] as co
 
 type Handler = (context: RouteContext) => unknown;
 
+interface ElysiaServer {
+	requestIP?(request: Request): { address?: string } | null;
+}
+
 interface ElysiaContext {
 	request: Request;
 	params: Record<string, string>;
 	query: Record<string, string | undefined>;
 	body: unknown;
 	set: ResponseControls;
+	server?: ElysiaServer | null;
 }
 
 interface RouteRegistrar {
@@ -53,6 +65,38 @@ function convert(pattern: string): { path: string; catch_all: string | null } {
 	return { path, catch_all };
 }
 
+function client_ip(request: Request, server: ElysiaServer | null | undefined, trust_proxy: boolean): string {
+	if (trust_proxy) {
+		const forwarded = request.headers.get("x-forwarded-for");
+		if (forwarded) return forwarded.split(",")[0].trim();
+	}
+	return server?.requestIP?.(request)?.address ?? "unknown";
+}
+
+function digest(value: string): Buffer {
+	return createHash("sha256").update(value).digest();
+}
+
+function safe_equal(a: string, b: string): boolean {
+	return timingSafeEqual(digest(a), digest(b));
+}
+
+function extract_token(request: Request, auth: AuthConfig): string | null {
+	const raw = request.headers.get(auth.scheme === "bearer" ? "authorization" : auth.header);
+	if (!raw) return null;
+	if (auth.scheme === "bearer") {
+		const match = /^Bearer\s+(.+)$/i.exec(raw);
+		return match ? match[1] : null;
+	}
+	return raw;
+}
+
+function token_allowed(token: string, tokens: string[]): boolean {
+	let allowed = false;
+	for (const candidate of tokens) allowed = safe_equal(token, candidate) || allowed;
+	return allowed;
+}
+
 export async function load_routes(directory: string): Promise<HttpServer | undefined> {
 	if (!config.server.enabled) return undefined;
 
@@ -70,19 +114,86 @@ export async function load_routes(directory: string): Promise<HttpServer | undef
 				return { code: "invalid_request", message: "The request payload is invalid." };
 			}
 			set.status = 500;
-			console.error(`${color.fg.red}App ${color.reset}‣ Request failed: ${error instanceof Error ? (error.stack ?? error.message) : error}`);
-			return { code: "internal_error", message: "An unexpected error occurred." };
+			console.error(`${color.fg.red}⨯${color.reset} ${tags.app} Request failed: ${error instanceof Error ? (error.stack ?? error.message) : error}`);
+			const detail = error instanceof Error ? error.message : String(error);
+			return { code: "internal_error", message: config.server.expose_errors ? detail : "An unexpected error occurred." };
 		})
 		.onRequest(({ request }) => {
 			const path = new URL(request.url).pathname;
-			console.log(`${color.fg.cyan}App ${color.reset}‣ ${color.fg.cyan}${request.method}${color.reset} ${path}`);
+			console.log(`${tags.app} ${tags.accent(request.method)} ${path}`);
 		});
 
-	if (config.server.cors) {
-		app.use(cors());
+	const server_config = config.server;
+
+	if (server_config.auth.enabled && server_config.auth.tokens.length === 0) {
+		console.warn(`${tags.app} ${color.fg.yellow}HTTP auth is enabled but no tokens are set${color.reset} — set ${tags.accent("API_TOKENS")} or every request will be rejected.`);
 	}
 
-	app.get(join_prefix(config.server.prefix, "/health"), () => ({ status: "ok" }));
+	if (server_config.cors.enabled) {
+		app.use(
+			cors({
+				origin: server_config.cors.origins.includes("*") ? true : server_config.cors.origins,
+				methods: server_config.cors.methods,
+				allowedHeaders: server_config.cors.headers,
+				credentials: server_config.cors.credentials,
+			})
+		);
+	}
+
+	const auth_public = server_config.auth.public_paths.map((entry) => join_prefix(server_config.prefix, entry));
+	const rate_public = server_config.rate_limit.public_paths.map((entry) => join_prefix(server_config.prefix, entry));
+	const window_ms = parse_duration(server_config.rate_limit.window) ?? 60_000;
+
+	const enforce = (instance: BaseRoute, context: ElysiaContext): unknown | null => {
+		const url = new URL(context.request.url);
+		const path = url.pathname;
+		const ip = client_ip(context.request, context.server, server_config.trust_proxy);
+
+		if (server_config.rules.length > 0) {
+			const rule_request: RuleRequest = {
+				path,
+				method: context.request.method,
+				ip,
+				user_agent: context.request.headers.get("user-agent") ?? "",
+				header: (name) => context.request.headers.get(name),
+				query: (name) => url.searchParams.get(name),
+			};
+			const outcome = evaluate_rules(server_config.rules, rule_request);
+			if (outcome) {
+				context.set.status = outcome.status;
+				return { code: "forbidden", message: outcome.message };
+			}
+		}
+
+		const auth_enabled = instance.auth ?? server_config.auth.enabled;
+		if (auth_enabled && !auth_public.includes(path)) {
+			const token = extract_token(context.request, server_config.auth);
+			if (token === null || !token_allowed(token, server_config.auth.tokens)) {
+				context.set.status = 401;
+				return { code: "unauthorized", message: "Authentication is required." };
+			}
+		}
+
+		if (instance.rate_limit !== false) {
+			const override = instance.rate_limit;
+			const rate_enabled = override ? true : server_config.rate_limit.enabled;
+			if (rate_enabled && !rate_public.includes(path)) {
+				const max = override ? override.max : server_config.rate_limit.max;
+				const limit_window = override ? (parse_duration(override.window) ?? window_ms) : window_ms;
+				const key = server_config.rate_limit.scope === "global" ? "global" : ip;
+				const result = rate_limiter.hit(`route:${path}:${key}`, max, limit_window);
+				if (!result.allowed) {
+					context.set.status = 429;
+					context.set.headers["retry-after"] = String(Math.ceil(result.retry_after / 1000));
+					return { code: "rate_limited", message: "Too many requests." };
+				}
+			}
+		}
+
+		return null;
+	};
+
+	app.get(join_prefix(server_config.prefix, "/health"), () => ({ status: "ok" }));
 
 	const registrar = app as unknown as RouteRegistrar;
 	let count = 0;
@@ -111,6 +222,9 @@ export async function load_routes(directory: string): Promise<HttpServer | undef
 			const rules = instance.schema?.[verb];
 
 			registrar.route(verb, full_path, (context) => {
+				const gate = enforce(instance, context);
+				if (gate !== null) return gate;
+
 				const params: Record<string, string> = { ...context.params };
 				if (catch_all && params["*"] !== undefined) params[catch_all] = params["*"];
 
@@ -140,9 +254,9 @@ export async function load_routes(directory: string): Promise<HttpServer | undef
 
 	app.listen({ hostname: config.server.host, port: config.server.port }, () => {
 		const host = config.server.host === "0.0.0.0" || config.server.host === "::" ? "localhost" : config.server.host;
-		console.log(`${color.fg.cyan}App ${color.reset}‣ Application started ➔  ${color.fg.cyan}http://${host}:${config.server.port}${config.server.prefix}${color.reset}.`);
+		console.log(`${tags.app} Application started ➔  ${tags.accent(`http://${host}:${config.server.port}${config.server.prefix}`)}.`);
 		if (count > 0) {
-			console.log(`${color.fg.cyan}App ${color.reset}‣ Loaded ${color.fg.cyan}${count}${color.reset} ${count > 1 ? "routes" : "route"}.`);
+			console.log(`${tags.app} Loaded ${tags.accent(count)} ${count > 1 ? "routes" : "route"}.`);
 		}
 	});
 
