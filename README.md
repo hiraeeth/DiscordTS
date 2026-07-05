@@ -106,6 +106,7 @@ This template is designed to be handed to an AI coding assistant (Claude Code, C
 | `.agents/context.md` | **Architecture & public surface.** How the engine wires features, every decorator and base class, the config shape, and where each kind of logic belongs. |
 | `.agents/agents.md` | **Coding rules.** Hard constraints: no comments, one job per file, snake_case (PascalCase for types), early returns, error handling, security, and the file-placement decision tree. |
 | `.agents/tests.md` | **Testing guide.** What to test, how to drive the HTTP API without a port, and the Bun test-runner conventions. |
+| `.claude/skills/` | **Scaffolding skills.** One skill per feature kind (`new-command`, `new-prefix-command`, `new-context-menu`, `new-event`, `new-task`, `new-component`, `new-route`) that walks an agent through creating it correctly. |
 
 If you use another tool, point it at `AGENTS.md`. Keeping these accurate is part of the workflow - when you change the framework surface, update `.agents/context.md` in the same change.
 
