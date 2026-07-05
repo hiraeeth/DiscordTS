@@ -50,7 +50,7 @@ Everything you write is snake_case except the type system, which is PascalCase. 
 | Our own builders/classes that mirror or extend a discord.js API | match the library's convention (camelCase) |
 
 - Descriptive, 4+ characters everywhere except the loop-index exception below.
-- **Mirror the library at its seams.** When a class we own stands in for a discord.js one and users chain it the same way, its fluent methods take the library's naming so both read alike — `PrefixCommandBuilder` uses `setName` / `setDescription` / `addUser`, not `set_name`, exactly like `SlashCommandBuilder`. This overrides the snake_case rule for those methods only; private internals and everything that is genuinely our own surface (helper option objects like `user_id` / `on_end`, decorator options, context fields) stay snake_case.
+- **Mirror the library at its seams.** When a class we own stands in for a discord.js one and users chain it the same way, its fluent methods take the library's naming so both read alike - `PrefixCommandBuilder` uses `setName` / `setDescription` / `addUser`, not `set_name`, exactly like `SlashCommandBuilder`. This overrides the snake_case rule for those methods only; private internals and everything that is genuinely our own surface (helper option objects like `user_id` / `on_end`, decorator options, context fields) stay snake_case.
 - One word where possible; no clarity-reducing abbreviations (`msg`, `cfg`, `usr` are out; write `message`, `config`, `user`).
 - Name a feature class for what it is, not its kind; the base class already says the kind (`Ping extends BaseCommand`, `Ready extends BaseEvent`, `MySelectMenu extends SelectComponent`).
 

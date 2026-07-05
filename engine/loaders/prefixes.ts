@@ -27,7 +27,7 @@ export async function load_prefixes(directory: string): Promise<number> {
 			const owner = claimed.get(label);
 			if (owner !== undefined) {
 				console.warn(
-					`${color.fg.yellow}⚠${color.reset} Prefix ${label === name ? "command name" : "alias"} [${color.fg.yellow}${label}${color.reset}] of ${name} collides with ${color.fg.yellow}${owner}${color.reset} — rename one to resolve the ambiguity.`
+					`${color.fg.yellow}⚠${color.reset} Prefix ${label === name ? "command name" : "alias"} [${color.fg.yellow}${label}${color.reset}] of ${name} collides with ${color.fg.yellow}${owner}${color.reset} - rename one to resolve the ambiguity.`
 				);
 			} else {
 				claimed.set(label, name);

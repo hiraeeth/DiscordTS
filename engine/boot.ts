@@ -71,7 +71,7 @@ export async function boot(): Promise<void> {
 	]);
 
 	if (is_deploy_outdated()) {
-		console.warn(`${tags.app} ${color.fg.yellow}Slash commands are outdated${color.reset} — run ${tags.accent(`${package_manager()} run deploy`)} to update them.`);
+		console.warn(`${tags.app} ${color.fg.yellow}Slash commands are outdated${color.reset} - run ${tags.accent(`${package_manager()} run deploy`)} to update them.`);
 	}
 
 	bind_dispatch();

@@ -57,7 +57,7 @@ export async function load_tasks(directory: string): Promise<number> {
 			count++;
 		} else if (registration.options.cron !== undefined) {
 			if (!validate_cron(registration.options.cron)) {
-				console.warn(`${color.fg.yellow}⚠${color.reset} Task [${color.fg.yellow}${label}${color.reset}] has an invalid cron expression "${registration.options.cron}" — it will never run.`);
+				console.warn(`${color.fg.yellow}⚠${color.reset} Task [${color.fg.yellow}${label}${color.reset}] has an invalid cron expression "${registration.options.cron}" - it will never run.`);
 			}
 			cron_tasks.push({ instance, expression: registration.options.cron, label });
 			count++;

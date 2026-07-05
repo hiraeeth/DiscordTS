@@ -12,7 +12,7 @@ describe("format_value", () => {
 
 	test("renders numbers and empty text", () => {
 		expect(format_value({ key: "n", label: "N", kind: "number", get: () => 42, set: () => {} })).toBe("42");
-		expect(format_value({ key: "t", label: "T", kind: "text", get: () => "", set: () => {} })).toBe("—");
+		expect(format_value({ key: "t", label: "T", kind: "text", get: () => "", set: () => {} })).toBe("-");
 		expect(format_value({ key: "t", label: "T", kind: "text", get: () => "hi", set: () => {} })).toBe("hi");
 	});
 

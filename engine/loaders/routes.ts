@@ -126,7 +126,7 @@ export async function load_routes(directory: string): Promise<HttpServer | undef
 	const server_config = config.server;
 
 	if (server_config.auth.enabled && server_config.auth.tokens.length === 0) {
-		console.warn(`${tags.app} ${color.fg.yellow}HTTP auth is enabled but no tokens are set${color.reset} — set ${tags.accent("API_TOKENS")} or every request will be rejected.`);
+		console.warn(`${tags.app} ${color.fg.yellow}HTTP auth is enabled but no tokens are set${color.reset} - set ${tags.accent("API_TOKENS")} or every request will be rejected.`);
 	}
 
 	if (server_config.cors.enabled) {

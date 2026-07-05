@@ -61,10 +61,10 @@ export function format_value(setting: PanelSetting): string {
 			return String(setting.get());
 		case "text": {
 			const value = setting.get();
-			return value.length > 0 ? value : "—";
+			return value.length > 0 ? value : "-";
 		}
 		default:
-			return "—";
+			return "-";
 	}
 }
 

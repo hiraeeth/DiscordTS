@@ -15,6 +15,6 @@ export default class Confirm extends BaseCommand {
 			danger: true,
 		});
 
-		await context.interaction.followUp({ content: accepted ? "Deleted (not really)." : "Cancelled — nothing was touched.", flags: MessageFlags.Ephemeral });
+		await context.interaction.followUp({ content: accepted ? "Deleted (not really)." : "Cancelled - nothing was touched.", flags: MessageFlags.Ephemeral });
 	}
 }
