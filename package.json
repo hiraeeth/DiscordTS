@@ -3,6 +3,9 @@
 	"version": "3.1.0",
 	"type": "module",
 	"main": "index.ts",
+	"workspaces": [
+		"packages/*"
+	],
 	"scripts": {
 		"dev": "bun run --watch index.ts",
 		"build": "bun run scripts/build.ts",

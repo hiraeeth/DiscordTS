@@ -1,0 +1,38 @@
+{
+	"name": "create-discordts",
+	"version": "1.0.0",
+	"description": "Scaffold a DiscordTS-Base Discord bot with one command.",
+	"type": "module",
+	"bin": {
+		"create-discordts": "index.ts"
+	},
+	"files": [
+		"index.ts"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/hiraeeth/DiscordTS.git",
+		"directory": "packages/create-discordts"
+	},
+	"keywords": [
+		"discord",
+		"discordjs",
+		"typescript",
+		"bun",
+		"template",
+		"scaffold",
+		"create"
+	],
+	"author": "hiraeeth",
+	"license": "ISC",
+	"engines": {
+		"bun": ">=1.1.0"
+	},
+	"dependencies": {
+		"picocolors": "^1.1.1",
+		"prompts": "^2.4.2"
+	},
+	"devDependencies": {
+		"@types/prompts": "^2.4.9"
+	}
+}

@@ -37,6 +37,14 @@ That is a complete, working command. Save it under `app/commands/` and it is liv
 
 ## Quick start
 
+The fastest way is the scaffolder - it clones the template, writes your `.env`, and installs dependencies interactively:
+
+```bash
+bunx create-discordts
+```
+
+Or set it up manually from a clone:
+
 ```bash
 bun install                 # install dependencies
 cp .env.example .env        # then fill in your credentials
