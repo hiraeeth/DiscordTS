@@ -23,7 +23,7 @@ The CLI walks you through everything interactively:
 ? Install dependencies with bun? » (Y/n)
 ```
 
-It downloads the latest template from GitHub, strips repository-only files, renames the package after your directory, writes your `.env`, and optionally initializes git and installs dependencies.
+It downloads the ready-to-run `deployment` branch (kept in sync with `main` by CI, with tests, tooling config, and repo-only files already removed), renames the package after your directory, writes your `.env`, and optionally initializes git and installs dependencies.
 
 ## Usage
 

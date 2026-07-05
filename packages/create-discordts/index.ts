@@ -7,8 +7,26 @@ import prompts from "prompts";
 import color from "picocolors";
 
 const REPOSITORY = "hiraeeth/DiscordTS";
-const BRANCH = "main";
-const PRUNED = [".git", ".github", "packages", "dist", "data", "logs", "node_modules", "bun.lock", "socket.yml", "CODE_OF_CONDUCT.md", "LICENSE"];
+const BRANCH = "deployment";
+const PRUNED = [
+	".git",
+	".github",
+	"packages",
+	"tests",
+	"dist",
+	"data",
+	"logs",
+	"node_modules",
+	"bun.lock",
+	"socket.yml",
+	"CODE_OF_CONDUCT.md",
+	"LICENSE",
+	"Dockerfile",
+	"docker-compose.yaml",
+	".prettierrc",
+	".prettierignore",
+	"eslint.config.mjs",
+];
 
 interface Answers {
 	directory: string;

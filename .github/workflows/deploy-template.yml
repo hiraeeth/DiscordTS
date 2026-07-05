@@ -1,0 +1,44 @@
+name: Deploy template
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-template
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Prepare manifest
+        run: bun .github/scripts/prepare-deployment.ts
+
+      - name: Build and push deployment branch
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git checkout --orphan deployment
+          git rm -rf --cached . > /dev/null
+
+          rm -rf tests packages .github CODE_OF_CONDUCT.md socket.yml LICENSE bun.lock \
+                 .prettierrc .prettierignore eslint.config.mjs Dockerfile docker-compose.yaml
+
+          git add -A
+          git commit -m "chore: sync deployment from ${GITHUB_SHA::7}"
+          git push -f origin deployment
