@@ -27,7 +27,7 @@
 		"axios": "^1.7.2",
 		"discord.js": "^14.26.5",
 		"dotenv": "^17.4.2",
-		"elysia": "^1.4.0",
+		"elysia": "^1.4.30",
 		"zod": "^4.4.3"
 	},
 	"devDependencies": {
