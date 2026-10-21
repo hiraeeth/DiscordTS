@@ -28,7 +28,7 @@
 		"discord.js": "^14.26.5",
 		"dotenv": "^17.4.2",
 		"elysia": "^1.4.0",
-		"zod": "^4.4.3"
+		"zod": "^4.6.7"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
